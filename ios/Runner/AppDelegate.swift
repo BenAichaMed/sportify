@@ -9,7 +9,7 @@ import google_maps_flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-    GMSServices.provideAPIKey("AIzaSyAAimr91Qct58LdQJHMVHhnBF8P1USAu8s")
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
