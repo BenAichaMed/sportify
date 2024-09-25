@@ -79,7 +79,7 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
               Icons.favorite,
               color: (_page == 3) ? Colors.orange : secondaryColor,
             ),
-            label: '',
+            label: 'favorite',
             backgroundColor: primaryColor,
           ),
           BottomNavigationBarItem(
@@ -87,7 +87,7 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
               Icons.person,
               color: (_page == 4) ? Colors.orange : secondaryColor,
             ),
-            label: '',
+            label: 'profile',
             backgroundColor: primaryColor,
           ),
         ],

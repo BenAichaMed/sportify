@@ -6,11 +6,11 @@ class RecommendedUserTile extends StatelessWidget {
   final VoidCallback onFollow;
 
   const RecommendedUserTile({
-    Key? key,
+    super.key,
     required this.username,
     required this.photoUrl,
     required this.onFollow,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class RecommendedUserTile extends StatelessWidget {
       title: Text(username),
       trailing: ElevatedButton(
         onPressed: onFollow,
-        child: Text('Follow'),
+        child: const Text('Follow'),
       ),
     );
   }

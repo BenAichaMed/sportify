@@ -9,6 +9,10 @@ import 'package:sportify1/utils/global_variable.dart';
 import 'package:sportify1/utils/utils.dart';
 import 'package:sportify1/widgets/authBackground.dart';
 import 'package:sportify1/widgets/text_field_input.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'interestsScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +33,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<bool> checkIfFirstLogin() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .get();
+
+      if (userDoc.exists && userDoc.data() != null) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        return userData['interests'] == null || userData['interests'].isEmpty;
+      }
+    } catch (e) {
+      print('Error checking first login: $e');
+    }
+    return false;
+  }
+
   void loginUser() async {
     setState(() {
       _isLoading = true;
@@ -37,14 +58,18 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text, password: _passwordController.text);
     if (res == 'success') {
       if (context.mounted) {
+        bool isFirstLogin = await checkIfFirstLogin();
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const ResponsiveLayout(
-                mobileScreenLayout: MobileScreenLayout(),
-                webScreenLayout: WebScreenLayout(),
-              ),
+          MaterialPageRoute(
+            builder: (context) => isFirstLogin
+                ? SelectInterestsScreen()
+                : const ResponsiveLayout(
+              mobileScreenLayout: MobileScreenLayout(),
+              webScreenLayout: WebScreenLayout(),
             ),
-            (route) => false);
+          ),
+              (route) => false,
+        );
 
         setState(() {
           _isLoading = false;
@@ -67,14 +92,18 @@ class _LoginScreenState extends State<LoginScreen> {
     String res = await AuthMethods().signInWithGoogle();
     if (res == 'success') {
       if (context.mounted) {
+        bool isFirstLogin = await checkIfFirstLogin();
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const ResponsiveLayout(
-                mobileScreenLayout: MobileScreenLayout(),
-                webScreenLayout: WebScreenLayout(),
-              ),
+          MaterialPageRoute(
+            builder: (context) => isFirstLogin
+                ? SelectInterestsScreen()
+                : const ResponsiveLayout(
+              mobileScreenLayout: MobileScreenLayout(),
+              webScreenLayout: WebScreenLayout(),
             ),
-            (route) => false);
+          ),
+              (route) => false,
+        );
 
         setState(() {
           _isLoading = false;
@@ -102,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Container(
                 padding: MediaQuery.of(context).size.width > webScreenSize
                     ? EdgeInsets.symmetric(
-                        horizontal: MediaQuery.of(context).size.width / 3)
+                    horizontal: MediaQuery.of(context).size.width / 3)
                     : const EdgeInsets.symmetric(horizontal: 32),
                 width: double.infinity,
                 child: Column(
@@ -115,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(
                       height: 4,
                     ),
-                    Text("Welcome back !!",
+                    const Text("Welcome back !!",
                         style: TextStyle(
                             color: Colors.black,
                             fontSize: 24,
@@ -175,16 +204,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: !_isLoading
                             ? const Text(
-                                'Log in',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              )
+                          'Log in',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        )
                             : const CircularProgressIndicator(
-                                color: primaryColor,
-                              ),
+                          color: primaryColor,
+                        ),
                       ),
                     ),
                     const SizedBox(
@@ -195,12 +224,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     const Text('or continue with'),
 
-                    Divider(color: Colors.grey),
+                    const Divider(color: Colors.grey),
                     const SizedBox(height: 10),
 
                     const SizedBox(height: 20),
                     InkWell(
-                      onTap:signInWithGoogle,
+                      onTap: signInWithGoogle,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 108),

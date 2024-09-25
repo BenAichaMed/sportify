@@ -8,7 +8,6 @@ import 'package:sportify1/responsive/responsive_layout.dart';
 import 'package:sportify1/responsive/web_screen_layout.dart';
 import 'package:sportify1/screens/login_screen.dart';
 import 'package:sportify1/utils/colors.dart';
-import 'package:sportify1/utils/global_variable.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

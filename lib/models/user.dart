@@ -8,6 +8,7 @@ class User {
   final String bio;
   final List followers;
   final List following;
+  final List<String> interests;
 
   const User({
     required this.username,
@@ -17,6 +18,7 @@ class User {
     required this.bio,
     required this.followers,
     required this.following,
+    required this.interests,
   });
 
   static User fromSnap(DocumentSnapshot snap) {
@@ -34,6 +36,7 @@ class User {
       bio: snapshot["bio"] ?? '',
       followers: snapshot["followers"] ?? [],
       following: snapshot["following"] ?? [],
+      interests: List<String>.from(snapshot["interests"] ?? []),
     );
   }
 
@@ -45,5 +48,6 @@ class User {
     "bio": bio,
     "followers": followers,
     "following": following,
+    "interests": interests,
   };
 }

@@ -6,7 +6,7 @@ abstract class Challenge {
   String description;
   String category;
   DateTime dateTime;
-  int participants;
+  List<String> participants;
   String creatorName;
   String creatorId;
 
@@ -46,31 +46,24 @@ abstract class Challenge {
     };
   }
 }
-
 class TennisChallenge extends Challenge {
   String location;
   int maxParticipants;
   String challengeType;
 
   TennisChallenge({
-    required String id,
-    required String title,
-    required String description,
-    required DateTime dateTime,
+    required super.id,
+    required super.title,
+    required super.description,
+    required super.dateTime,
     required this.location,
     required this.challengeType,
     required this.maxParticipants,
-    required String creatorName,
-    required String creatorId,
+    required super.creatorName,
+    required super.creatorId,
+    required super.participants,
   }) : super(
-    id: id,
-    title: title,
-    description: description,
     category: 'Tennis',
-    dateTime: dateTime,
-    participants: 0,
-    creatorName: creatorName,
-    creatorId: creatorId,
   );
 
   factory TennisChallenge.fromMap(Map<String, dynamic> data) {
@@ -84,6 +77,7 @@ class TennisChallenge extends Challenge {
       maxParticipants: data['maxParticipants'] ?? 4,
       creatorName: data['creatorName'] ?? 'Anonymous',
       creatorId: data['creatorId'] ?? 'Anonymous',
+      participants: List<String>.from(data['participants'] ?? []),
     );
   }
 
@@ -98,36 +92,26 @@ class TennisChallenge extends Challenge {
     return map;
   }
 }
-
 class RunningCyclingChallenge extends Challenge {
   String location;
-  String startPoint;
-  String endPoint;
+  String meetup;
   double distance;
   int maxParticipants;
 
   RunningCyclingChallenge({
-    required String id,
-    required String title,
-    required String description,
-    required DateTime dateTime,
+    required super.id,
+    required super.title,
+    required super.description,
+    required super.dateTime,
     required this.location,
-    required this.startPoint,
-    required this.endPoint,
+    required this.meetup,
     required this.distance,
     required this.maxParticipants,
-    required String creatorName,
-    required String creatorId,
-  }) : super(
-    id: id,
-    title: title,
-    description: description,
-    category: 'Running',
-    dateTime: dateTime,
-    participants: 0,
-    creatorName: creatorName,
-    creatorId: creatorId,
-  );
+    required super.creatorName,
+    required super.creatorId,
+    required super.participants,
+    required super.category,
+  });
 
   factory RunningCyclingChallenge.fromMap(Map<String, dynamic> data) {
     return RunningCyclingChallenge(
@@ -136,12 +120,13 @@ class RunningCyclingChallenge extends Challenge {
       description: data['description'],
       dateTime: (data['dateTime'] as Timestamp).toDate(),
       location: data['location'],
-      startPoint: data['startPoint'],
-      endPoint: data['endPoint'],
+      meetup: data['meetup'],
       distance: data['distance'],
       maxParticipants: data['maxParticipants'] ?? 20,
       creatorName: data['creatorName'] ?? 'Anonymous',
       creatorId: data['creatorId'] ?? 'Anonymous',
+      participants: List<String>.from(data['participants'] ?? []),
+      category: data['category'],
     );
   }
 
@@ -150,8 +135,7 @@ class RunningCyclingChallenge extends Challenge {
     var map = super.toMap();
     map.addAll({
       'location': location,
-      'startPoint': startPoint,
-      'endPoint': endPoint,
+      'meetup': meetup,
       'distance': distance,
       'maxParticipants': maxParticipants,
     });

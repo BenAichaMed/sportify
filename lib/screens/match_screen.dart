@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 
 class MatchScreen extends StatefulWidget {
   final String challengeId;
   final int poolIndex;
   final String creatorId;
 
-  const MatchScreen({required this.challengeId, required this.poolIndex, required this.creatorId});
+  const MatchScreen({super.key, required this.challengeId, required this.poolIndex, required this.creatorId});
 
   @override
   _MatchScreenState createState() => _MatchScreenState();
@@ -16,11 +18,22 @@ class MatchScreen extends StatefulWidget {
 class _MatchScreenState extends State<MatchScreen> {
   List<MatchEntry> matches = [];
   bool isLoading = false;
+  bool isCreator = false;
 
   @override
   void initState() {
     super.initState();
+    _checkIfCreator();
     _loadMatches();
+  }
+
+  Future<void> _checkIfCreator() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        isCreator = user.uid == widget.creatorId;
+      });
+    }
   }
 
   Future<void> _loadMatches() async {
@@ -57,6 +70,213 @@ class _MatchScreenState extends State<MatchScreen> {
       setState(() => isLoading = false);
     }
   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.deepOrange,
+        title: const Text('Match Tracker'),
+        actions: isCreator
+            ? [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveMatches,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addMatch,
+          ),
+        ]
+            : null,
+      ),
+      body: Stack(
+        children: [
+          // Background Image with full screen height
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height, // Ensure full screen height
+            child: Image.asset(
+              'assets/match_back.jpeg',
+              fit: BoxFit.cover, // This ensures the image covers the entire area
+            ),
+          ),
+          // Scrollable content
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Informative text
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    'Here you can track your match score. Don\'t forget to save!',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ...matches.asMap().entries.map((entry) {
+                  return _buildMatchEntry(entry.value, entry.key);
+                }).toList(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildMatchEntry(MatchEntry match, int matchIndex) {
+    return Card(
+      color: Colors.grey[200],
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.deepOrangeAccent,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10.0),
+                topRight: Radius.circular(10.0),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: isCreator
+                      ? () => _selectDateTime(context, match)
+                      : null,
+                  child: Container(
+                    padding: const EdgeInsets.all(9.0),
+                    width: MediaQuery.of(context).size.width - 80,
+                    child: Text(
+                      match.dateTime != null
+                          ? DateFormat('dd MMM yyyy, HH:mm').format(match.dateTime!)
+                          : 'Click to select Date & Time',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                if (isCreator)
+                  IconButton(
+                    icon: const Icon(Icons.highlight_remove),
+                    onPressed: () => _removeMatch(matchIndex),
+                    color: Colors.white,
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      child: TextField(
+                        decoration: const InputDecoration(labelText: 'Player 1 Name'),
+                        controller: match.player1Controller,
+                        readOnly: !isCreator,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: 100,
+                      child: TextField(
+                        decoration: const InputDecoration(labelText: 'Player 2 Name'),
+                        controller: match.player2Controller,
+                        readOnly: !isCreator,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 45),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ...match.sets.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          SetEntry set = entry.value;
+                          return Container(
+                            margin: const EdgeInsets.only(right: 3, top: 10),
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 40,
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                    ),
+                                    controller: set.player1ScoreController,
+                                    readOnly: !isCreator,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: 40,
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                    ),
+                                    controller: set.player2ScoreController,
+                                    readOnly: !isCreator,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                                if (isCreator)
+                                  IconButton(
+                                    icon: const Icon(Icons.remove_circle),
+                                    onPressed: () {
+                                      setState(() {
+                                        match.removeSet(index);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        if (isCreator)
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                match.addSet();
+                              });
+                            },
+                            icon: const Icon(Icons.add),
+                          ),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _saveMatches() async {
     setState(() => isLoading = true);
@@ -69,9 +289,8 @@ class _MatchScreenState extends State<MatchScreen> {
           .doc(widget.poolIndex.toString());
 
       for (var match in matches) {
-        final matchDoc = poolDoc.collection('matches').doc(match.id);
-        await matchDoc.set({
-          'dateTime': match.dateTime,
+        final matchData = {
+          'dateTime': match.dateTime != null ? Timestamp.fromDate(match.dateTime!) : null,
           'player1Name': match.player1Controller.text,
           'player2Name': match.player2Controller.text,
           'sets': match.sets.map((set) {
@@ -80,12 +299,23 @@ class _MatchScreenState extends State<MatchScreen> {
               'player2Score': set.player2ScoreController.text,
             };
           }).toList(),
-        });
-        match.id = matchDoc.id;
-        match.isSaved = true;
+        };
+
+        if (match.id != null) {
+          await poolDoc.collection('matches').doc(match.id).set(matchData);
+        } else {
+          final newDoc = await poolDoc.collection('matches').add(matchData);
+          match.id = newDoc.id;
+        }
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Matches saved successfully')),
+      );
     } catch (e) {
-      print('Error saving matches: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save matches: $e')),
+      );
     } finally {
       setState(() => isLoading = false);
     }
@@ -140,165 +370,6 @@ class _MatchScreenState extends State<MatchScreen> {
         });
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Matches'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _saveMatches,
-          ),
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addMatch,
-          ),
-        ],
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-        padding: EdgeInsets.all(16.0),
-        itemCount: matches.length,
-        itemBuilder: (context, index) {
-          return _buildMatchEntry(matches[index], index);
-        },
-      ),
-    );
-  }
-
-  Widget _buildMatchEntry(MatchEntry match, int matchIndex) {
-    return Card(
-      color: Colors.grey[200],
-      margin: EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10.0),
-                topRight: Radius.circular(10.0),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => _selectDateTime(context, match),
-                  child: Container(
-                    padding: EdgeInsets.all(9.0),
-                    width: MediaQuery.of(context).size.width - 80,
-                    child: Text(
-                      match.dateTime != null
-                          ? DateFormat('dd MMM yyyy, HH:mm').format(match.dateTime!)
-                          : 'Click to select Date & Time',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.highlight_remove),
-                  onPressed: () => _removeMatch(matchIndex),
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      width: 100,
-                      child: TextField(
-                        decoration: InputDecoration(labelText: 'Player 1 Name'),
-                        controller: match.player1Controller,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Container(
-                      width: 100,
-                      child: TextField(
-                        decoration: InputDecoration(labelText: 'Player 2 Name'),
-                        controller: match.player2Controller,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(width: 45),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        ...match.sets.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          SetEntry set = entry.value;
-                          return Container(
-                            margin: EdgeInsets.only(right: 3, top: 10),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  child: TextField(
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                    ),
-                                    controller: set.player1ScoreController,
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Container(
-                                  width: 40,
-                                  child: TextField(
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                    ),
-                                    controller: set.player2ScoreController,
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.remove_circle),
-                                  onPressed: () {
-                                    setState(() {
-                                      match.removeSet(index);
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              match.addSet();
-                            });
-                          },
-                          icon: Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

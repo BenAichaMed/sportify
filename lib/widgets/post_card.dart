@@ -345,7 +345,7 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ),
               ),
-              Text('${widget.snap['likes'].length} likes', style: TextStyle(color: Colors.black),),
+              Text('${widget.snap['likes'].length} likes', style: const TextStyle(color: Colors.black),),
               IconButton(
                 icon: const Icon(
                   Icons.comment_outlined,
@@ -359,7 +359,7 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ),
               ),
-              Text('$commentLen comments', style: TextStyle(color: Colors.black),),
+              Text('$commentLen comments', style: const TextStyle(color: Colors.black),),
             ],
           ),
         ],

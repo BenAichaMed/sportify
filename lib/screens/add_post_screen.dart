@@ -32,12 +32,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
               onPressed: () async {
                 Navigator.pop(context);
                 Uint8List file = await pickImage(ImageSource.camera); // Ensure this is ImageSource.camera
-                if (file != null) {
-                  setState(() {
-                    _selectedFiles = [file];
-                  });
-                }
-              },
+                setState(() {
+                  _selectedFiles = [file];
+                });
+                            },
             ),
             SimpleDialogOption(
               padding: const EdgeInsets.all(20),
@@ -197,14 +195,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 user.photoUrl,
               )
                   : null,
-              child: const Text(
-                'Post',
-                style: TextStyle(color: Colors.white),
-              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _selectedFiles != null && _selectedFiles!.isNotEmpty
                     ? Colors.black
                     : Colors.grey,
+              ),
+              child: const Text(
+                'Post',
+                style: TextStyle(color: Colors.white),
               ),
             ),
             if (isLoading)

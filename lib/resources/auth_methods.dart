@@ -5,7 +5,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sportify1/models/user.dart' as model;
 import 'package:sportify1/resources/storage_methods.dart';
 
-import '../utils/global_variable.dart';
 
 class AuthMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -52,6 +51,7 @@ class AuthMethods {
           bio: bio,
           followers: [],
           following: [],
+          interests: [], // Initialize interests as an empty list
         );
 
         // Adding user to the database
@@ -100,7 +100,12 @@ class AuthMethods {
   }
   Future<String> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+        signInOption: SignInOption.standard,
+        forceCodeForRefreshToken: true, // This forces the account selection prompt
+      );
+      await googleSignIn.signOut(); // Ensure previous sign-in is cleared
       final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
 
       if (googleSignInAccount != null) {
@@ -114,10 +119,8 @@ class AuthMethods {
         final User? user = authResult.user;
 
         if (user != null) {
-          // Check if user already exists in Firestore
           final DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
           if (!userDoc.exists) {
-            // User doesn't exist, so create a new user in Firestore
             await _firestore.collection("users").doc(user.uid).set({
               'uid': user.uid,
               'email': user.email,
@@ -129,13 +132,12 @@ class AuthMethods {
         }
       }
       return "success";
-    }
-
-    catch (e) {
+    } catch (e) {
       return e.toString();
     }
-
   }
+
+  // Signing out user
 
   Future<void> signOut() async {
     await _auth.signOut();

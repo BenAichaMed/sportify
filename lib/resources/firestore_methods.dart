@@ -61,11 +61,10 @@ class FireStoreMethods {
 
   // Post comment
   Future<String> postComment(String postId, String text, String uid,
-      String name, String profilePic) async {
+      String name, String profilePic,{int likes = 0}) async {
     String res = "Some error occurred";
     try {
       if (text.isNotEmpty) {
-        // if the likes list contains the user uid, we need to remove it
         String commentId = const Uuid().v1();
         _firestore
             .collection('posts')
@@ -76,10 +75,14 @@ class FireStoreMethods {
           'profilePic': profilePic,
           'name': name,
           'uid': uid,
+          'likes': 0,
+          'isLiked': false,
           'text': text,
           'commentId': commentId,
           'datePublished': DateTime.now(),
+          'postId': postId,
         });
+
         res = 'success';
       } else {
         res = "Please enter text";

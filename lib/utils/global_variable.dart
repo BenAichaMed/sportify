@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sportify1/screens/challenges_list.dart';
-import 'package:sportify1/screens/event_page.dart';
 import 'package:sportify1/screens/feed_screen.dart';
 import 'package:sportify1/screens/profile_screen.dart';
 
@@ -32,7 +31,7 @@ List<Widget> homeScreenItems(BuildContext context) {
   return [
     const FeedScreen(),
     const MapScreen(),
-    ChallengesListScreen(),
+    const ChallengesListScreen(),
     const Text('notifications'),
     ProfileScreen(uid: appState.currentUserUID),
   ];

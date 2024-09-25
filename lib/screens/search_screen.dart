@@ -36,11 +36,10 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         backgroundColor: mobileBackgroundColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back), color: Colors.black,
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Search',style: TextStyle(color: Colors.black),),
-
+        title: const Text('Search', style: TextStyle(color: Colors.black)),
       ),
       body: Column(
         children: [
@@ -51,12 +50,11 @@ class _SearchScreenState extends State<SearchScreen> {
               controller: searchController,
               decoration: InputDecoration(
                 hintText: 'Search for a user...',
-                suffixIcon: const Icon(Icons.search),
-                hintStyle: const TextStyle(color: Colors.black),
+                suffixIcon: const Icon(Icons.search, color: Colors.black),
+                hintStyle: const TextStyle(color: Colors.black54),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: const BorderSide(color: Colors.black),
-
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -65,89 +63,78 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ),
-          searchController.text.isEmpty ? _buildRecommendedUsers() : _buildSearchResults(),
+          Expanded(
+            child: searchController.text.isEmpty
+                ? _buildRecommendedUsers()
+                : _buildSearchResults(),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildRecommendedUsers() {
-    return Expanded(
-      child: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('users').limit(10).snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return ListView(
-            children: snapshot.data!.docs.map((doc) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(doc['photoUrl']),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Log error or handle it as needed
-                  },
-                  child: Image.network(
-                    doc['photoUrl'],
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                      // Return an error icon or placeholder image
-                      return const Icon(Icons.error);
-                    },
-                  ),
-                ),
-                title: Text(doc['username'],style: TextStyle(color: Colors.black),),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(uid: doc['uid']),
-                  ),
-                ),
-              );
-            }).toList(),
-          );
-        },
-      ),
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance.collection('users').limit(10).snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No users found.'));
+        }
+
+        return ListView(
+          children: snapshot.data!.docs.map((doc) {
+            return _buildUserTile(doc);
+          }).toList(),
+        );
+      },
     );
   }
 
   Widget _buildSearchResults() {
-    return Expanded(
-      child: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .where('username', isGreaterThanOrEqualTo: searchController.text)
-            .snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return ListView(
-            children: snapshot.data!.docs.map((doc) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(doc['photoUrl']),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Log error or handle it as needed
-                  },
-                  child: Image.network(
-                    doc['photoUrl'],
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                      // Return an error icon or placeholder image
-                      return const Icon(Icons.error);
-                    },
-                  ),
-                ),
-                title: Text(doc['username'],style: TextStyle(color: Colors.black),),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(uid: doc['uid']),
-                  ),
-                ),
-              );
-            }).toList(),
-          );
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isGreaterThanOrEqualTo: searchController.text)
+          .where('username', isLessThan: searchController.text + '\uf8ff')
+          .snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No results found.'));
+        }
+
+        return ListView(
+          children: snapshot.data!.docs.map((doc) {
+            return _buildUserTile(doc);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserTile(QueryDocumentSnapshot doc) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: NetworkImage(doc['photoUrl']),
+        radius: 24, // Adjust the radius as needed
+        onBackgroundImageError: (exception, stackTrace) {
+          // Handle error as needed
         },
+        // If needed, you can add a background color
+        backgroundColor: Colors.grey[300],
+      ),
+      title: Text(doc['username'], style: const TextStyle(color: Colors.black)),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(uid: doc['uid']),
+        ),
       ),
     );
   }

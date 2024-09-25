@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ScheduleScreen extends StatefulWidget {
   final Map<int, List<Map<String, dynamic>>> pools;
 
-  const ScheduleScreen({required this.pools});
+  const ScheduleScreen({super.key, required this.pools});
 
   @override
   _ScheduleScreenState createState() => _ScheduleScreenState();
@@ -64,29 +64,29 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Schedule')),
+      appBar: AppBar(title: const Text('Schedule')),
       body: SingleChildScrollView(
         child: Column(
           children: matches.entries.map((entry) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Pool ${entry.key + 1}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Pool ${entry.key + 1}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Table(
                   border: TableBorder.all(),
                   children: [
-                    TableRow(
+                    const TableRow(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(8.0),
                           child: Text('Player 1', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(8.0),
                           child: Text('Player 2', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(8.0),
                           child: Text('Date & Time', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
@@ -109,13 +109,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               onTap: () => _pickDateTime(context, entry.key, matchIndex),
                               child: Text(
                                 '${match['date'].day}/${match['date'].month}/${match['date'].year} at ${match['date'].hour}:${match['date'].minute}',
-                                style: TextStyle(color: Colors.blue),
+                                style: const TextStyle(color: Colors.blue),
                               ),
                             ),
                           ),
                         ],
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ],

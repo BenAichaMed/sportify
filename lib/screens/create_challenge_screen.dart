@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:sportify1/models/challenges.dart';
 import 'package:intl/intl.dart';
 import 'package:sportify1/models/user.dart' as CustomUser;
 
 class CreateChallengeScreen extends StatefulWidget {
-  const CreateChallengeScreen({Key? key}) : super(key: key);
+  const CreateChallengeScreen({super.key});
 
   @override
   _CreateChallengeScreenState createState() => _CreateChallengeScreenState();
@@ -17,16 +18,15 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _startPointController = TextEditingController();
-  final TextEditingController _endPointController = TextEditingController();
+  final TextEditingController _meetupController = TextEditingController();
   final TextEditingController _distanceController = TextEditingController();
   final TextEditingController _maxParticipantsController = TextEditingController();
   DateTime _selectedDateTime = DateTime.now();
   String _selectedCategory = 'Running'; // Default category
-  List<String> _categories = ['Running', 'Tennis', 'Basketball', 'Cycling'];
+  final List<String> _categories = ['Running', 'Tennis', 'Basketball', 'Cycling'];
   final user = FirebaseAuth.instance.currentUser;
   String _selectedChallengeType = 'Normal Game'; // Default challenge type
-  List<String> _challengeTypes = ['Normal Game', 'Competition'];
+  final List<String> _challengeTypes = ['Normal Game', 'Competition'];
 
   Future<String> _getUsername() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
@@ -46,12 +46,13 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           description: _descriptionController.text,
           dateTime: _selectedDateTime,
           location: _locationController.text,
-          startPoint: _startPointController.text,
-          endPoint: _endPointController.text,
+          meetup: _meetupController.text,
           distance: double.tryParse(_distanceController.text) ?? 0.0,
           maxParticipants: int.tryParse(_maxParticipantsController.text) ?? 20,
           creatorName: creatorName,
           creatorId: user!.uid,
+          participants: [],
+          category: _selectedCategory,
         );
       } else if (_selectedCategory == 'Tennis') {
         newChallenge = TennisChallenge(
@@ -64,6 +65,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           creatorName: creatorName,
           creatorId: user!.uid,
           challengeType: _selectedChallengeType,
+          participants: [],
         );
       } else {
         throw Exception('Unknown challenge category: $_selectedCategory');
@@ -74,7 +76,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           .set(newChallenge.toMap())
           .then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Challenge created successfully!')),
+          const SnackBar(content: Text('Challenge created successfully!')),
         );
         Navigator.pop(context);
       }).catchError((error) {
@@ -135,11 +137,11 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              Text(
+              const Text(
                 'Create a New Challenge',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -149,11 +151,13 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a title';
+                  } else if (value.length > 20) {
+                    return 'Title cannot be more than 20 characters';
                   }
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -164,11 +168,13 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a description';
+                  } else if (value.length > 150) {
+                    return 'Description cannot be more than 150 characters';
                   }
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               DropdownButtonFormField(
                 value: _selectedCategory,
                 decoration: const InputDecoration(
@@ -188,7 +194,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                 },
               ),
               if (_selectedCategory == 'Tennis' || _selectedCategory == 'Running' || _selectedCategory == 'Cycling') ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _locationController,
                   decoration: const InputDecoration(
@@ -204,13 +210,15 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                 ),
               ],
               if (_selectedCategory == 'Tennis') ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _maxParticipantsController,
                   decoration: const InputDecoration(
                     labelText: 'Max Participants',
                     border: OutlineInputBorder(),
                   ),
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter max participants';
@@ -218,7 +226,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 DropdownButtonFormField(
                   value: _selectedChallengeType,
                   decoration: const InputDecoration(
@@ -239,11 +247,11 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                 ),
               ],
               if (_selectedCategory == 'Running' || _selectedCategory == 'Cycling') ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextFormField(
-                  controller: _startPointController,
+                  controller: _meetupController,
                   decoration: const InputDecoration(
-                    labelText: 'Start Point',
+                    labelText: 'Meetup Point',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
@@ -253,21 +261,8 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _endPointController,
-                  decoration: const InputDecoration(
-                    labelText: 'End Point',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an end point';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16),
+
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _distanceController,
                   decoration: const InputDecoration(
@@ -280,27 +275,29 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                     }
                     return null;
                   },
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  keyboardType: TextInputType.number,
                 ),
               ],
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ListTile(
                 title: Text('Date: ${DateFormat('yMMMd').format(_selectedDateTime)}'),
-                trailing: Icon(Icons.calendar_today),
+                trailing: const Icon(Icons.calendar_today),
                 onTap: _selectDate,
               ),
               ListTile(
                 title: Text('Time: ${DateFormat('jm').format(_selectedDateTime)}'),
-                trailing: Icon(Icons.access_time),
+                trailing: const Icon(Icons.access_time),
                 onTap: _selectTime,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _submitForm,
-                child: const Text('Create Challenge'),
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 18),
                 ),
+                child: const Text('Create Challenge'),
               ),
             ],
           ),

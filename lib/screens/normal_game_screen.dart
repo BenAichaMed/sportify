@@ -4,7 +4,7 @@ import 'package:sportify1/models/challenges.dart';
 class NormalGameScreen extends StatefulWidget {
   final Challenge challenge;
 
-  const NormalGameScreen({required this.challenge, Key? key}) : super(key: key);
+  const NormalGameScreen({required this.challenge, super.key});
 
   @override
   State<NormalGameScreen> createState() => _NormalGameScreenState();
@@ -17,7 +17,7 @@ class _NormalGameScreenState extends State<NormalGameScreen> {
       appBar: AppBar(
         title: Text('Normal Game: ${widget.challenge.title}'),
       ),
-      body: Center(
+      body: const Center(
         child: Text('Normal Game Screen Content Here'),
       ),
     );

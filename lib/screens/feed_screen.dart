@@ -25,7 +25,7 @@ class _FeedScreenState extends State<FeedScreen> {
           : AppBar(
         backgroundColor: mobileBackgroundColor,
         centerTitle: false,
-        title: Text(
+        title: const Text(
           'Sportify',
           style: TextStyle(
             color: Colors.black,
@@ -43,7 +43,7 @@ class _FeedScreenState extends State<FeedScreen> {
               color: Colors.black,
             ),
             onPressed: (){
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => SearchScreen()));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SearchScreen()));
                 },
           ),
           IconButton(
@@ -75,11 +75,11 @@ class _FeedScreenState extends State<FeedScreen> {
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (ctx, index) {
               var doc = snapshot.data!.docs[index];
-              if (!doc.exists || doc.data() == null) {
+              if (!doc.exists) {
                 return Container();
               }
 
-              var postData = doc.data()!;
+              var postData = doc.data();
               if (postData.isEmpty) {
                 return Container();
               }
@@ -100,13 +100,13 @@ class _FeedScreenState extends State<FeedScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
 
-           Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddPostScreen()));
+           Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AddPostScreen()));
         },
-        child: const Icon(Icons.add),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
         backgroundColor: Colors.deepOrangeAccent,
+        child: const Icon(Icons.add),
       ),
     );
   }

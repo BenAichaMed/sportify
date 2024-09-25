@@ -9,7 +9,7 @@ class CategoryButton extends StatelessWidget {
   final Color selectedTextColor;
   final Color unselectedTextColor;
 
-  const CategoryButton({
+  const CategoryButton({super.key, 
     required this.category,
     required this.isSelected,
     required this.onTap,
@@ -38,7 +38,7 @@ class CategoryButton extends StatelessWidget {
               color: Colors.black.withOpacity(0.2),
               spreadRadius: 0,
               blurRadius: 4,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ] : [],
         ),

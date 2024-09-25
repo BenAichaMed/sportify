@@ -10,7 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sportify1/models/user.dart' as CustomUser;
 
 class ChallengesListScreen extends StatefulWidget {
-  const ChallengesListScreen({Key? key}) : super(key: key);
+  const ChallengesListScreen({super.key});
 
   @override
   _ChallengesListScreenState createState() => _ChallengesListScreenState();
@@ -94,13 +94,13 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.all(10),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               challenge.title,
-              style: TextStyle(
+              style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.deepOrangeAccent
@@ -108,16 +108,17 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
             ),
             if (challenge is TennisChallenge)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
                 decoration: BoxDecoration(
                   color: challenge.challengeType == 'Competition'
                       ? Colors.redAccent
                       : Colors.green,
                   borderRadius: BorderRadius.circular(4),
+
                 ),
                 child: Text(
                   challenge.challengeType,
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontSize: 7),
                 ),
               ),
           ],
@@ -125,14 +126,14 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               '${challenge.category} - ${DateFormat('d MMMM yyyy \'at\' h:mm a').format(challenge.dateTime)}',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text('Created by: ${challenge.creatorName}'),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(challenge.description),
           ],
         ),
@@ -141,29 +142,29 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.delete),
+              icon: const Icon(Icons.delete),
               color: Colors.red,
               onPressed: () => _deleteChallenge(challenge.id),
             ),
             IconButton(
-              icon: Icon(Icons.report),
+              icon: const Icon(Icons.report),
               color: Colors.orange,
               onPressed: () => _reportChallenge(challenge.id),
             ),
           ],
         )
             : IconButton(
-          icon: Icon(Icons.report),
+          icon: const Icon(Icons.report),
           color: Colors.orange,
           onPressed: () => _reportChallenge(challenge.id),
         ),
         onTap: () {
           switch (challenge.category) {
-            case 'Running':
+            case 'Running' || 'Cycling':
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => RunningChallengeDetailScreen(challenge: challenge),
+                  builder: (context) => RunningChallengeDetailScreen(challenge: challenge as RunningCyclingChallenge),
                 ),
               );
               break;
@@ -181,114 +182,168 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
     );
   }
 
+  Widget _buildChallengesTab() {
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance.collection('challenges').snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No challenges found.'));
+        }
+
+        var challenges = snapshot.data!.docs.map((doc) => Challenge.fromMap(doc.data() as Map<String, dynamic>)).toList();
+
+        if (selectedCategory != 'All') {
+          challenges = challenges.where((challenge) => challenge.category == selectedCategory).toList();
+        }
+
+        return ListView.builder(
+          itemCount: challenges.length,
+          itemBuilder: (context, index) {
+            final challenge = challenges[index];
+            return _buildChallengeCard(challenge);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMyChallengesTab() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('challenges')
+          .where('participants', arrayContains: userId)
+          .snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No challenges found.'));
+        }
+
+        var challenges = snapshot.data!.docs.map((doc) => Challenge.fromMap(doc.data() as Map<String, dynamic>)).toList();
+
+        if (selectedCategory != 'All') {
+          challenges = challenges.where((challenge) => challenge.category == selectedCategory).toList();
+        }
+
+        return ListView.builder(
+          itemCount: challenges.length,
+          itemBuilder: (context, index) {
+            final challenge = challenges[index];
+            return _buildChallengeCard(challenge);
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Challenges', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                CategoryButton(
-                  category: 'All',
-                  isSelected: selectedCategory == 'All',
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = 'All';
-                    });
-                  },
-                ),
-                CategoryButton(
-                  category: 'Running',
-                  isSelected: selectedCategory == 'Running',
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = 'Running';
-                    });
-                  },
-                ),
-                CategoryButton(
-                  category: 'Cycling',
-                  isSelected: selectedCategory == 'Cycling',
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = 'Cycling';
-                    });
-                  },
-                ),
-                CategoryButton(
-                  category: 'Tennis',
-                  isSelected: selectedCategory == 'Tennis',
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = 'Tennis';
-                    });
-                  },
-                ),
-                // Add more category buttons as needed
-              ],
-            ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Challenges', style: TextStyle(fontWeight: FontWeight.bold)),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: 'Challenges'),
+              Tab(text: 'My Challenges'),
+            ],
           ),
-          SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.0),
-              topRight: Radius.circular(20.0),
-            ),
-            child: Image.asset(
-              categoryImages[selectedCategory]!,
-              height: 250,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          SizedBox(height: 10),
-          Expanded(
-            child: StreamBuilder(
-              stream: FirebaseFirestore.instance.collection('challenges').snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No challenges found.'));
-                }
-
-                var challenges = snapshot.data!.docs.map((doc) => Challenge.fromMap(doc.data() as Map<String, dynamic>)).toList();
-
-                if (selectedCategory != 'All') {
-                  challenges = challenges.where((challenge) => challenge.category == selectedCategory).toList();
-                }
-
-                return ListView.builder(
-                  itemCount: challenges.length,
-                  itemBuilder: (context, index) {
-                    final challenge = challenges[index];
-                    return _buildChallengeCard(challenge);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CreateChallengeScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
         ),
-        backgroundColor: Colors.deepOrangeAccent,
+
+        body: Column(
+          children: [
+            SizedBox(height: 10),
+
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  CategoryButton(
+                    category: 'All',
+                    isSelected: selectedCategory == 'All',
+                    onTap: () {
+                      setState(() {
+                        selectedCategory = 'All';
+                      });
+                    },
+                  ),
+                  CategoryButton(
+                    category: 'Running',
+                    isSelected: selectedCategory == 'Running',
+                    onTap: () {
+                      setState(() {
+                        selectedCategory = 'Running';
+                      });
+                    },
+                  ),
+                  CategoryButton(
+                    category: 'Cycling',
+                    isSelected: selectedCategory == 'Cycling',
+                    onTap: () {
+                      setState(() {
+                        selectedCategory = 'Cycling';
+                      });
+                    },
+                  ),
+                  CategoryButton(
+                    category: 'Tennis',
+                    isSelected: selectedCategory == 'Tennis',
+                    onTap: () {
+                      setState(() {
+                        selectedCategory = 'Tennis';
+                      });
+                    },
+                  ),
+                  // Add more category buttons as needed
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20.0),
+                topRight: Radius.circular(20.0),
+              ),
+              child: Image.asset(
+                categoryImages[selectedCategory]!,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildChallengesTab(),
+                  _buildMyChallengesTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateChallengeScreen()),
+            );
+          },
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          backgroundColor: Colors.deepOrangeAccent,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

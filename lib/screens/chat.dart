@@ -8,7 +8,7 @@ import 'package:sportify1/models/user.dart' as CustomUser;
 class ChatScreen extends StatefulWidget {
   final String challengeId;
 
-  const ChatScreen({Key? key, required this.challengeId}) : super(key: key);
+  const ChatScreen({super.key, required this.challengeId});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();

@@ -20,6 +20,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
   final TextEditingController commentEditingController = TextEditingController();
 
   void postComment(String uid, String name, String profilePic) async {
+    if (commentEditingController.text.isEmpty) {
+      showSnackBar(context, 'Comment cannot be empty');
+      return;
+    }
+
     try {
       String res = await FireStoreMethods().postComment(
         widget.postId,
@@ -27,19 +32,18 @@ class _CommentsScreenState extends State<CommentsScreen> {
         uid,
         name,
         profilePic,
+        likes: 0, // Initialize likes field
       );
 
       if (res != 'success') {
-        if (context.mounted) showSnackBar(context, res);
+        showSnackBar(context, res);
+      } else {
+        setState(() {
+          commentEditingController.clear(); // Clear only on success
+        });
       }
-      setState(() {
-        commentEditingController.text = "";
-      });
     } catch (err) {
-      showSnackBar(
-        context,
-        err.toString(),
-      );
+      showSnackBar(context, err.toString());
     }
   }
 
@@ -48,7 +52,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     final User? user = Provider.of<UserProvider>(context).getUser;
 
     if (user == null) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -58,9 +62,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: mobileBackgroundColor,
-        title: const Text(
-          'Comments',
-        ),
+        title: const Text('Comments'),
         centerTitle: false,
       ),
       body: StreamBuilder(
@@ -68,19 +70,22 @@ class _CommentsScreenState extends State<CommentsScreen> {
             .collection('posts')
             .doc(widget.postId)
             .collection('comments')
+            .orderBy('datePublished', descending: true) // Sort by datePublished
             .snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No comments yet.'));
           }
 
           return ListView.builder(
             itemCount: snapshot.data!.docs.length,
-            itemBuilder: (ctx, index) => CommentCard(
-              snap: snapshot.data!.docs[index].data(),
-            ),
+            itemBuilder: (context, index) {
+              return CommentCard(snap: snapshot.data!.docs[index].data());
+            },
           );
         },
       ),
@@ -108,19 +113,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 ),
               ),
               InkWell(
-                onTap: () => postComment(
-                  user.uid,
-                  user.username,
-                  user.photoUrl,
-                ),
+                onTap: () => postComment(user.uid, user.username, user.photoUrl),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  child: const Text(
-                    'Post',
-                    style: TextStyle(color: Colors.blue),
-                  ),
+                  child: const Text('Post', style: TextStyle(color: Colors.blue)),
                 ),
-              )
+              ),
             ],
           ),
         ),
